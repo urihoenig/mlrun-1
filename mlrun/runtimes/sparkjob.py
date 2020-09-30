@@ -51,7 +51,7 @@ _sparkjob_template = {
         "image": "",
         "imagePullPolicy": "IfNotPresent",
         "mainApplicationFile": "",
-        "sparkVersion": "2.4.0",
+        "sparkVersion": "2.4.4",
         "restartPolicy": {
             "type": "OnFailure",
             "onFailureRetries": 3,
@@ -152,6 +152,9 @@ class SparkRuntime(KubejobRuntime):
             update_in(job, "spec.mainClass", self.spec.main_class)
         if self.spec.spark_version:
             update_in(job, "spec.sparkVersion", self.spec.spark_version)
+        if runobj.spec.output_path:
+            update_in(job, ["spec", "sparkConf", "spark.eventLog.enabled"], "true")
+            update_in(job, ["spec", "sparkConf", "spark.eventLog.dir"], runobj.spec.output_path)
         update_in(job, "metadata", meta.to_dict())
         update_in(job, "spec.driver.labels", pod_labels)
         update_in(job, "spec.executor.labels", pod_labels)

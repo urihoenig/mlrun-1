@@ -153,7 +153,7 @@ class SparkRuntime(KubejobRuntime):
         if self.spec.spark_version:
             update_in(job, "spec.sparkVersion", self.spec.spark_version)
         if runobj.spec.output_path:
-            update_in(job, ["spec", "sparkConf", "spark.eventLog.enabled"], "true")
+#            update_in(job, ["spec", "sparkConf", "spark.eventLog.enabled"], "true")
             update_in(job, ["spec", "sparkConf", "spark.eventLog.dir"], runobj.spec.output_path)
         update_in(job, "metadata", meta.to_dict())
         update_in(job, "spec.driver.labels", pod_labels)

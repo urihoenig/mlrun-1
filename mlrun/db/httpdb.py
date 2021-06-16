@@ -38,8 +38,6 @@ from ..lists import ArtifactList, RunList
 from ..utils import datetime_to_iso, dict_to_json, logger, new_pipe_meta
 from .base import RunDBError, RunDBInterface
 
-default_project = config.default_project
-
 _artifact_keys = [
     "format",
     "inline",
@@ -184,7 +182,7 @@ class HTTPRunDB(RunDBInterface):
         return resp
 
     def _path_of(self, prefix, project, uid):
-        project = project or default_project
+        project = project or config.default_project
         return f"{prefix}/{project}/{uid}"
 
     def connect(self, secrets=None):
@@ -425,7 +423,7 @@ class HTTPRunDB(RunDBInterface):
         :param last_update_time_to: Filter by run last update time in ``(last_update_time_from, last_update_time_to)``.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "uid": uid,
@@ -457,7 +455,7 @@ class HTTPRunDB(RunDBInterface):
         :param days_ago: Filter runs whose start time is newer than this parameter.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "project": project,
@@ -495,7 +493,7 @@ class HTTPRunDB(RunDBInterface):
     def read_artifact(self, key, tag=None, iter=None, project=""):
         """ Read an artifact, identified by its key, tag and iteration."""
 
-        project = project or default_project
+        project = project or config.default_project
         tag = tag or "latest"
         path = f"projects/{project}/artifact/{key}?tag={tag}"
         error = f"read artifact {project}/{key}"
@@ -548,7 +546,7 @@ class HTTPRunDB(RunDBInterface):
             from that iteration. If using ``best_iter``, the ``iter`` parameter must not be used.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "project": project,
@@ -573,7 +571,7 @@ class HTTPRunDB(RunDBInterface):
         :param labels: Choose artifacts which are labeled.
         :param days_ago: This parameter is deprecated and not used.
         """
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "project": project,
@@ -587,7 +585,7 @@ class HTTPRunDB(RunDBInterface):
     def list_artifact_tags(self, project=None):
         """ Return a list of all the tags assigned to artifacts in the scope of the given project."""
 
-        project = project or default_project
+        project = project or config.default_project
         error_message = f"Failed listing artifact tags. project={project}"
         response = self.api_call(
             "GET", f"/projects/{project}/artifact-tags", error_message
@@ -598,7 +596,7 @@ class HTTPRunDB(RunDBInterface):
         """ Store a function object. Function is identified by its name and tag, and can be versioned."""
 
         params = {"tag": tag, "versioned": versioned}
-        project = project or default_project
+        project = project or config.default_project
         path = self._path_of("func", project, name)
 
         error = f"store function {project}/{name}"
@@ -613,7 +611,7 @@ class HTTPRunDB(RunDBInterface):
         """ Retrieve details of a specific function, identified by its name and potentially a tag or function hash."""
 
         params = {"tag": tag, "hash_key": hash_key}
-        project = project or default_project
+        project = project or config.default_project
         path = self._path_of("func", project, name)
         error = f"get function {project}/{name}"
         resp = self.api_call("GET", path, error, params=params)
@@ -622,7 +620,7 @@ class HTTPRunDB(RunDBInterface):
     def delete_function(self, name: str, project: str = ""):
         """ Delete a function belonging to a specific project."""
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/functions/{name}"
         error_message = f"Failed deleting function {project}/{name}"
         self.api_call("DELETE", path, error_message)
@@ -638,7 +636,7 @@ class HTTPRunDB(RunDBInterface):
         """
 
         params = {
-            "project": project or default_project,
+            "project": project or config.default_project,
             "name": name,
             "tag": tag,
             "label": labels or [],
@@ -769,7 +767,7 @@ class HTTPRunDB(RunDBInterface):
             db.create_schedule(project_name, schedule)
         """
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/schedules"
 
         error_message = f"Failed creating schedule {project}/{schedule.name}"
@@ -780,7 +778,7 @@ class HTTPRunDB(RunDBInterface):
     ):
         """ Update an existing schedule, replace it with the details contained in the schedule object."""
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/schedules/{name}"
 
         error_message = f"Failed updating schedule {project}/{name}"
@@ -798,7 +796,7 @@ class HTTPRunDB(RunDBInterface):
         :param include_last_run: Whether to include the results of the schedule's last run in the response.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/schedules/{name}"
         error_message = f"Failed getting schedule for {project}/{name}"
         resp = self.api_call(
@@ -822,7 +820,7 @@ class HTTPRunDB(RunDBInterface):
             that schedule.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {"kind": kind, "name": name, "include_last_run": include_last_run}
         path = f"projects/{project}/schedules"
         error_message = f"Failed listing schedules for {project} ? {kind} {name}"
@@ -832,7 +830,7 @@ class HTTPRunDB(RunDBInterface):
     def delete_schedule(self, project: str, name: str):
         """ Delete a specific schedule by name. """
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/schedules/{name}"
         error_message = f"Failed deleting schedule {project}/{name}"
         self.api_call("DELETE", path, error_message)
@@ -840,7 +838,7 @@ class HTTPRunDB(RunDBInterface):
     def invoke_schedule(self, project: str, name: str):
         """ Execute the object referenced by the schedule immediately. """
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/schedules/{name}/invoke"
         error_message = f"Failed invoking schedule {project}/{name}"
         self.api_call("POST", path, error_message)
@@ -962,7 +960,7 @@ class HTTPRunDB(RunDBInterface):
     def get_background_task(self, project: str, name: str,) -> schemas.BackgroundTask:
         """ Retrieve updated information on a background task being executed."""
 
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/background-tasks/{name}"
         error_message = (
             f"Failed getting background task. project={project}, name={name}"
@@ -1182,7 +1180,9 @@ class HTTPRunDB(RunDBInterface):
             feature_set = feature_set.dict()
 
         project = (
-            project or feature_set["metadata"].get("project", None) or default_project
+            project
+            or feature_set["metadata"].get("project", None)
+            or config.default_project
         )
         path = f"projects/{project}/feature-sets"
         params = {"versioned": versioned}
@@ -1206,7 +1206,7 @@ class HTTPRunDB(RunDBInterface):
         :param uid: uid of the object to retrieve (can only be used for versioned objects).
         """
 
-        project = project or default_project
+        project = project or config.default_project
         reference = self._resolve_reference(tag, uid)
         path = f"projects/{project}/feature-sets/{name}/references/{reference}"
         error_message = f"Failed retrieving feature-set {project}/{name}"
@@ -1236,7 +1236,7 @@ class HTTPRunDB(RunDBInterface):
             of the feature-set.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "tag": tag,
@@ -1258,7 +1258,7 @@ class HTTPRunDB(RunDBInterface):
         against the name rather than the features.
         """
 
-        project = project or default_project
+        project = project or config.default_project
         params = {
             "name": name,
             "tag": tag,
@@ -1320,7 +1320,7 @@ class HTTPRunDB(RunDBInterface):
         :returns: List of matching :py:class:`~mlrun.feature_store.FeatureSet` objects.
         """
 
-        project = project or default_project
+        project = project or config.default_project
 
         params = {
             "name": name,
@@ -1377,7 +1377,9 @@ class HTTPRunDB(RunDBInterface):
             feature_set = feature_set.dict()
 
         name = name or feature_set["metadata"]["name"]
-        project = project or feature_set["metadata"].get("project") or default_project
+        project = (
+            project or feature_set["metadata"].get("project") or config.default_project
+        )
         path = f"projects/{project}/feature-sets/{name}/references/{reference}"
         error_message = f"Failed storing feature-set {project}/{name}"
         resp = self.api_call(
@@ -1413,7 +1415,7 @@ class HTTPRunDB(RunDBInterface):
         :param patch_mode: The strategy for merging the changes with the existing object. Can be either ``replace``
             or ``additive``.
         """
-        project = project or default_project
+        project = project or config.default_project
         reference = self._resolve_reference(tag, uid)
         if isinstance(patch_mode, schemas.PatchMode):
             patch_mode = patch_mode.value
@@ -1434,7 +1436,7 @@ class HTTPRunDB(RunDBInterface):
         is not allowed.
         If none are specified, then all instances of the object whose name is ``name`` will be deleted.
         """
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/feature-sets/{name}"
 
         if tag or uid:
@@ -1464,7 +1466,7 @@ class HTTPRunDB(RunDBInterface):
         project = (
             project
             or feature_vector["metadata"].get("project", None)
-            or default_project
+            or config.default_project
         )
         path = f"projects/{project}/feature-vectors"
         params = {"versioned": versioned}
@@ -1486,7 +1488,7 @@ class HTTPRunDB(RunDBInterface):
         """ Return a specific feature-vector referenced by its tag or uid. If none are provided, ``latest`` tag will
         be used. """
 
-        project = project or default_project
+        project = project or config.default_project
         reference = self._resolve_reference(tag, uid)
         path = f"projects/{project}/feature-vectors/{name}/references/{reference}"
         error_message = f"Failed retrieving feature-vector {project}/{name}"
@@ -1522,7 +1524,7 @@ class HTTPRunDB(RunDBInterface):
         :returns: List of matching :py:class:`~mlrun.feature_store.FeatureVector` objects.
         """
 
-        project = project or default_project
+        project = project or config.default_project
 
         params = {
             "name": name,
@@ -1578,7 +1580,9 @@ class HTTPRunDB(RunDBInterface):
 
         name = name or feature_vector["metadata"]["name"]
         project = (
-            project or feature_vector["metadata"].get("project") or default_project
+            project
+            or feature_vector["metadata"].get("project")
+            or config.default_project
         )
         path = f"projects/{project}/feature-vectors/{name}/references/{reference}"
         error_message = f"Failed storing feature-vector {project}/{name}"
@@ -1611,7 +1615,7 @@ class HTTPRunDB(RunDBInterface):
             or ``additive``.
         """
         reference = self._resolve_reference(tag, uid)
-        project = project or default_project
+        project = project or config.default_project
         if isinstance(patch_mode, schemas.PatchMode):
             patch_mode = patch_mode.value
         headers = {schemas.HeaderNames.patch_mode: patch_mode}
@@ -1631,7 +1635,7 @@ class HTTPRunDB(RunDBInterface):
         is not allowed.
         If none are specified, then all instances of the object whose name is ``name`` will be deleted.
         """
-        project = project or default_project
+        project = project or config.default_project
         path = f"projects/{project}/feature-vectors/{name}"
         if tag or uid:
             reference = self._resolve_reference(tag, uid)
